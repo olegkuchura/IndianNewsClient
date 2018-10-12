@@ -9,7 +9,7 @@ import java.util.List;
  * Created by Oleg on 10.08.2017.
  */
 
-public class NewsApiResponse {
+public class NewsResponse {
 
     @SerializedName("status")
     private String status;
@@ -23,7 +23,7 @@ public class NewsApiResponse {
     @SerializedName("articles")
     private List<PieceOfNews> articles;
 
-    public NewsApiResponse(String status, String source, String sortBy, List<PieceOfNews> articles) {
+    public NewsResponse(String status, String source, String sortBy, List<PieceOfNews> articles) {
         this.status = status;
         this.source = source;
         this.sortBy = sortBy;

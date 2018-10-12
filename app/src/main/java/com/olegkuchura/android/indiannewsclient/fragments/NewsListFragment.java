@@ -19,18 +19,18 @@ import android.widget.Toast;
 
 import com.olegkuchura.android.indiannewsclient.R;
 import com.olegkuchura.android.indiannewsclient.adapters.NewsRecyclerAdapter;
+import com.olegkuchura.android.indiannewsclient.app.App;
 import com.olegkuchura.android.indiannewsclient.listeners.OnNewsRecyclerItemClickListener;
-import com.olegkuchura.android.indiannewsclient.network.NewsApiResponse;
-import com.olegkuchura.android.indiannewsclient.network.NewsErrorItem;
 import com.olegkuchura.android.indiannewsclient.model.PieceOfNews;
-import com.olegkuchura.android.indiannewsclient.network.ApiCallback;
-import com.olegkuchura.android.indiannewsclient.network.RestClient;
+import com.olegkuchura.android.indiannewsclient.network.NewsResponse;
 import com.olegkuchura.android.indiannewsclient.storages.Database;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit.client.Response;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class NewsListFragment extends Fragment implements OnNewsRecyclerItemClickListener {
     public static final String TAG = NewsListFragment.class.getSimpleName();
@@ -125,17 +125,21 @@ public class NewsListFragment extends Fragment implements OnNewsRecyclerItemClic
         if (adapter.isListEmpty()) {
             showProgressBar();
         }
-        RestClient.getInstance().getService().getNews(new ApiCallback<NewsApiResponse>() {
+
+        App.getNewsService().getNews().enqueue(new Callback<NewsResponse>() {
             @Override
-            public void success(NewsApiResponse newsApiResponse, Response response) {
+            public void onResponse(Call<NewsResponse> call, Response<NewsResponse> response) {
                 Log.d("MyLog", "loadNews().success()");
-                List<PieceOfNews> news = newsApiResponse.getArticles();
+                List<PieceOfNews> news = response.body().getArticles();
+
+                //delete news without a date
                 for (int i = 0; i < news.size(); i++) {
                     if (news.get(i).getDate() == null) {
                         news.remove(i);
                         i--;
                     }
                 }
+
                 Database.newInstance(getActivity().getApplicationContext()).addNews(news);
                 displayNewsFromDatabase();
                 hideProgressBar();
@@ -143,13 +147,14 @@ public class NewsListFragment extends Fragment implements OnNewsRecyclerItemClic
             }
 
             @Override
-            public void failure(NewsErrorItem newsError) {
-                Log.d("MyLog", "loadNews().failure() custom " + newsError.getMessage() + "   " + newsError.getCode());
-                Toast.makeText(getActivity(), "network error", Toast.LENGTH_LONG).show();
+            public void onFailure(Call<NewsResponse> call, Throwable t) {
+                Log.d("MyLog", "loadNews().onFailure()");
+                Toast.makeText(getActivity(), "network error", Toast.LENGTH_SHORT).show();
                 hideProgressBar();
                 refreshLayout.setRefreshing(false);
             }
         });
+
     }
 
     @Override
